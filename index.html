@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#09090f">
+<title>Pay Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#09090f;--s1:#111118;--s2:#1c1c26;--s3:#252533;--border:#2e2e3e;--text:#f0f0f8;--sub:#7070a0;--lhsc:#5b8def;--lhscb:#162040;--craig:#f07840;--craigb:#2e1000;--green:#2dd4a0;--greenb:#08201a;--red:#f16b6b;--redb:#200808;--amber:#f5b944;--amberb:#201400;--r:14px;--rs:10px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);padding-bottom:72px;overscroll-behavior:none}
+
+/* TOP BAR */
+.top{background:var(--s1);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100}
+.top-title{font-size:16px;font-weight:800;letter-spacing:-0.5px}
+.top-right{text-align:right}
+.top-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--sub)}
+.top-amt{font-size:19px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums;letter-spacing:-0.5px}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;height:72px;background:var(--s1);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:100}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:none;cursor:pointer;color:var(--sub);font-size:9px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-family:'Inter',sans-serif;transition:color 0.15s;padding:6px 2px}
+.nb .ic{font-size:22px;line-height:1;transition:transform 0.15s}
+.nb.on{color:var(--lhsc)}.nb.on .ic{transform:scale(1.15)}
+
+/* PAGES */
+.pg{display:none;padding:14px;max-width:540px;margin:0 auto}
+.pg.on{display:block}
+
+/* JOB CARDS */
+.job-card{border-radius:var(--r);padding:16px 18px;margin-bottom:10px;position:relative;overflow:hidden}
+.job-card.lhsc{background:linear-gradient(145deg,#0d1a32,#162040);border:1px solid #1e3060}
+.job-card.craig{background:linear-gradient(145deg,#200d00,#2e1600);border:1px solid #4a2000}
+.jc-glow{position:absolute;width:100px;height:100px;border-radius:50%;top:-20px;right:-20px;opacity:0.12;filter:blur(24px);pointer-events:none}
+.jc-glow.lhsc{background:var(--lhsc)}.jc-glow.craig{background:var(--craig)}
+.jc-row{display:flex;justify-content:space-between;align-items:flex-start}
+.jc-name{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em}
+.jc-name.lhsc{color:var(--lhsc)}.jc-name.craig{color:var(--craig)}
+.jc-period{font-size:11px;color:var(--sub);margin-top:3px}
+.jc-rate{font-size:10px;color:var(--sub);margin-top:2px}
+.jc-gross{font-size:28px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1}
+.jc-gross.lhsc{color:var(--lhsc)}.jc-gross.craig{color:var(--craig)}
+.jc-hrs{font-size:11px;color:var(--sub);margin-top:3px;text-align:right}
+.jc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07)}
+.jc-cd{font-size:12px;font-weight:700}
+.jc-cd.soon{color:var(--green)}.jc-cd.warn{color:var(--amber)}.jc-cd.dim{color:var(--sub)}
+.prog{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:10px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;transition:width 0.5s}
+.prog-fill.lhsc{background:var(--lhsc)}.prog-fill.craig{background:var(--craig)}
+
+/* COMBINED CARD */
+.combo{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.combo-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--sub);margin-bottom:12px}
+.combo-big{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.combo-big-label{font-size:13px;color:var(--sub)}
+.combo-big-val{font-size:26px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums;letter-spacing:-0.5px}
+.combo-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.combo-row:last-child{border-bottom:none}
+.combo-row-label{font-size:12px;color:var(--sub)}
+.combo-row-val{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* LOG TAB */
+.seg{display:flex;background:var(--s2);border-radius:var(--r);padding:3px;gap:3px;margin-bottom:12px}
+.seg-btn{flex:1;padding:9px;border-radius:var(--rs);border:none;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;background:none;color:var(--sub);display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s}
+.seg-dot{width:6px;height:6px;border-radius:50%}
+.seg-dot.lhsc{background:var(--lhsc)}.seg-dot.craig{background:var(--craig)}
+.seg-btn.on.lhsc{background:var(--lhscb);color:var(--lhsc)}
+.seg-btn.on.craig{background:var(--craigb);color:var(--craig)}
+
+/* SHIFTS TABLE */
+.shifts-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.sh-hdr{display:grid;grid-template-columns:72px 1fr 54px 70px 52px;gap:0;padding:8px 14px;background:var(--s2);border-bottom:1px solid var(--border)}
+.sh-hdr span{font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.06em}
+.sh-hdr span:nth-child(3),.sh-hdr span:nth-child(4){text-align:right}
+.sh-hdr span:last-child{text-align:center}
+.shift{display:grid;grid-template-columns:72px 1fr 54px 70px 52px;gap:0;padding:10px 14px;border-bottom:1px solid var(--border);align-items:center;transition:background 0.1s}
+.shift:last-child{border-bottom:none}
+.shift:active{background:var(--s2)}
+.sh-date{font-size:12px;font-weight:600}
+.sh-type{font-size:11px;color:var(--sub)}
+.sh-hrs{font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.sh-pay{font-size:12px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.sh-btns{display:flex;gap:2px;justify-content:center}
+.act-btn{background:none;border:none;cursor:pointer;width:24px;height:24px;border-radius:6px;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background 0.1s}
+.act-btn.edit:active{background:rgba(91,141,239,0.2);color:var(--lhsc)}
+.act-btn.del:active{background:var(--redb);color:var(--red)}
+.sh-empty{padding:28px 14px;text-align:center;color:var(--sub);font-size:13px}
+
+.sh-foot{display:grid;grid-template-columns:repeat(4,1fr);padding:10px 14px;background:var(--s2);border-top:1px solid var(--border);gap:4px}
+.sf{text-align:center}
+.sf-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--sub);margin-bottom:3px}
+.sf-val{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* QUICK ADD */
+.add-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.add-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:0.07em}
+.badge.lhsc{background:var(--lhscb);color:var(--lhsc)}
+.badge.craig{background:var(--craigb);color:var(--craig)}
+.badge.editing{background:var(--amberb);color:var(--amber)}
+
+/* MULTI SHIFT SELECTOR */
+.date-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:12px}
+.cal-day{aspect-ratio:1;border-radius:7px;border:1.5px solid var(--border);background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.12s;color:var(--sub);flex-direction:column;gap:1px}
+.cal-day.today{border-color:var(--sub);color:var(--text)}
+.cal-day.sel{border-color:var(--lhsc);background:var(--lhscb);color:var(--lhsc)}
+.cal-day.sel.craig{border-color:var(--craig);background:var(--craigb);color:var(--craig)}
+.cal-day.past{opacity:0.4}
+.cal-day-num{font-size:12px;font-weight:700;line-height:1}
+.cal-day-name{font-size:8px;color:inherit;opacity:0.7}
+.cal-week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-week-label{font-size:12px;font-weight:600;color:var(--sub)}
+.cal-nav-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;padding:4px 10px;font-size:13px;font-family:'Inter',sans-serif}
+
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.field label{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:0.05em}
+.field input,.field select{width:100%;height:44px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:15px;font-family:'Inter',sans-serif;padding:0 12px;background:var(--s2);color:var(--text);outline:none;transition:border-color 0.15s;-webkit-appearance:none}
+.field input:focus,.field select:focus{border-color:var(--lhsc)}
+
+.sel-count{font-size:12px;color:var(--sub);margin-bottom:10px}
+.sel-count span{color:var(--text);font-weight:700}
+
+.btn-row{display:flex;gap:8px}
+.btn{flex:1;height:46px;border-radius:var(--rs);border:none;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity 0.15s}
+.btn:active{opacity:0.8}
+.btn.lhsc{background:var(--lhsc);color:#000}
+.btn.craig{background:var(--craig);color:#000}
+.btn.amber{background:var(--amber);color:#000}
+.btn.ghost{background:var(--s3);color:var(--sub)}
+
+/* HISTORY */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px}
+.filter-btn{padding:7px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:1.5px solid var(--border);background:var(--s1);color:var(--sub);font-family:'Inter',sans-serif;transition:all 0.15s}
+.filter-btn.on{background:var(--s3);color:var(--text);border-color:var(--s3)}
+
+.period-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.period-hdr{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;transition:background 0.1s}
+.period-hdr:active{background:var(--s2)}
+.ph-name{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px}
+.ph-dates{font-size:11px;color:var(--sub)}
+.ph-payday{font-size:10px;color:var(--sub);margin-top:2px}
+.ph-gross{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.ph-gross.lhsc{color:var(--lhsc)}.ph-gross.craig{color:var(--craig)}
+.ph-hrs{font-size:11px;color:var(--sub);margin-top:2px}
+.ph-chev{font-size:14px;color:var(--sub);transition:transform 0.2s;flex-shrink:0}
+.ph-chev.open{transform:rotate(90deg)}
+.period-body{display:none;border-top:1px solid var(--border);padding:12px 16px}
+.period-body.open{display:block}
+.curr-tag{font-size:9px;font-weight:800;background:var(--greenb);color:var(--green);padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:0.06em}
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.ms-item{background:var(--s2);border-radius:8px;padding:9px;text-align:center}
+.ms-label{font-size:9px;color:var(--sub);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em;font-weight:600}
+.ms-val{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.hist-row{display:grid;grid-template-columns:72px 1fr 54px 70px 52px;padding:9px 0;border-bottom:1px solid var(--border);align-items:center;font-size:12px}
+.hist-row:last-child{border-bottom:none}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--sub);margin-bottom:8px}
+.stat-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.5px}
+.stat-sub{font-size:11px;color:var(--sub);margin-top:4px}
+.chart-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.chart-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--sub);margin-bottom:12px}
+.chart-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.chart-row:last-child{margin-bottom:0}
+.chart-lbl{font-size:10px;width:58px;flex-shrink:0;color:var(--sub)}
+.chart-track{flex:1;height:8px;background:var(--s2);border-radius:4px;overflow:hidden}
+.chart-bar{height:100%;border-radius:4px;transition:width 0.5s}
+.chart-val{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;width:52px;text-align:right;flex-shrink:0}
+
+/* SETUP */
+.setup-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.setup-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px}
+.setup-title.lhsc{color:var(--lhsc)}.setup-title.craig{color:var(--craig)}.setup-title.g{color:var(--sub)}
+.setup-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.setup-row:last-child{border-bottom:none}
+.setup-row-label{font-size:13px;font-weight:500}
+.setup-row-sub{font-size:10px;color:var(--sub);margin-top:2px}
+.setup-input{height:38px;width:114px;border:1.5px solid var(--border);border-radius:8px;background:var(--s2);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:0 10px;outline:none;text-align:right;-webkit-appearance:none}
+.setup-input:focus{border-color:var(--lhsc)}
+.save-btn{width:100%;height:46px;border-radius:var(--rs);border:none;background:var(--lhsc);color:#fff;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer}
+
+/* EDIT MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:flex-end}
+.overlay.on{display:flex}
+.sheet{background:var(--s1);border-radius:20px 20px 0 0;padding:18px 16px 34px;width:100%;border-top:1px solid var(--border)}
+.sheet-handle{width:32px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 14px}
+.sheet-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* TOAST */
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--s2);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
+.toast.on{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <div class="top-title">Pay Tracker</div>
+    <div id="top-date" style="font-size:11px;color:var(--sub);margin-top:1px">—</div>
+  </div>
+  <div class="top-right">
+    <div class="top-label">This period</div>
+    <div class="top-amt" id="top-amt">$0.00</div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="pg on" id="pg-home">
+  <div id="lhsc-card"></div>
+  <div id="craig-card"></div>
+  <div class="combo" id="combo-card"></div>
+</div>
+
+<!-- LOG -->
+<div class="pg" id="pg-log">
+  <div class="seg">
+    <button class="seg-btn lhsc on" id="seg-lhsc" onclick="switchJob('lhsc')">
+      <span class="seg-dot lhsc"></span>LHSC
+    </button>
+    <button class="seg-btn craig" id="seg-craig" onclick="switchJob('craig')">
+      <span class="seg-dot craig"></span>Craigweil
+    </button>
+  </div>
+
+  <!-- LHSC LOG -->
+  <div id="log-lhsc">
+    <div class="shifts-card">
+      <div class="sh-hdr"><span>Date</span><span>Type</span><span>Hrs</span><span>Pay</span><span>Actions</span></div>
+      <div id="rows-lhsc"></div>
+      <div class="sh-foot">
+        <div class="sf"><div class="sf-label">Hours</div><div class="sf-val" id="ft-lhsc-hrs">0.00</div></div>
+        <div class="sf"><div class="sf-label">Regular</div><div class="sf-val" id="ft-lhsc-reg">$0</div></div>
+        <div class="sf"><div class="sf-label">OT/Prem</div><div class="sf-val" id="ft-lhsc-ot">$0</div></div>
+        <div class="sf"><div class="sf-label">Gross</div><div class="sf-val" style="color:var(--lhsc)" id="ft-lhsc-gross">$0</div></div>
+      </div>
+    </div>
+    <div class="add-card" id="add-lhsc">
+      <div class="add-title">
+        <span id="add-title-lhsc">Add shifts</span>
+        <span class="badge lhsc">LHSC</span>
+        <span class="badge editing" id="edit-badge-lhsc" style="display:none">Editing</span>
+      </div>
+
+      <!-- Week picker for multi-select -->
+      <div id="multi-lhsc" style="display:block">
+        <div class="cal-week-nav">
+          <button class="cal-nav-btn" onclick="prevWeek('lhsc')">‹</button>
+          <span class="cal-week-label" id="week-label-lhsc">This week</span>
+          <button class="cal-nav-btn" onclick="nextWeek('lhsc')">›</button>
+        </div>
+        <div class="date-grid" id="cal-lhsc"></div>
+        <div class="sel-count" id="sel-count-lhsc">Select days you worked</div>
+      </div>
+
+      <div class="f2">
+        <div class="field">
+          <label>Shift type</label>
+          <select id="type-lhsc">
+            <option value="Regular">Regular</option>
+            <option value="Eve prem">Evening prem</option>
+            <option value="Wknd prem">Weekend prem</option>
+            <option value="OT 1.5x">Overtime 1.5x</option>
+            <option value="Holiday">Holiday 1.5x</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Hours per shift</label>
+          <input type="number" id="hrs-lhsc" placeholder="7.5" step="0.25" inputmode="decimal">
+        </div>
+      </div>
+      <div class="f2" style="margin-bottom:12px">
+        <div class="field">
+          <label>Extra pay ($)</label>
+          <input type="number" id="extra-lhsc" placeholder="0.00" step="0.01" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Or exact date</label>
+          <input type="date" id="single-date-lhsc">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost" id="cancel-lhsc" onclick="cancelEdit('lhsc')" style="display:none">Cancel</button>
+        <button class="btn lhsc" id="submit-lhsc" onclick="submitShift('lhsc')">+ Add selected shifts</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CRAIGWEIL LOG -->
+  <div id="log-craig" style="display:none">
+    <div class="shifts-card">
+      <div class="sh-hdr"><span>Date</span><span>Type</span><span>Hrs</span><span>Pay</span><span>Actions</span></div>
+      <div id="rows-craig"></div>
+      <div class="sh-foot">
+        <div class="sf"><div class="sf-label">Hours</div><div class="sf-val" id="ft-craig-hrs">0.00</div></div>
+        <div class="sf"><div class="sf-label">Regular</div><div class="sf-val" id="ft-craig-reg">$0</div></div>
+        <div class="sf"><div class="sf-label">OT/Prem</div><div class="sf-val" id="ft-craig-ot">$0</div></div>
+        <div class="sf"><div class="sf-label">Gross</div><div class="sf-val" style="color:var(--craig)" id="ft-craig-gross">$0</div></div>
+      </div>
+    </div>
+    <div class="add-card" id="add-craig">
+      <div class="add-title">
+        <span id="add-title-craig">Add shifts</span>
+        <span class="badge craig">Craigweil</span>
+        <span class="badge editing" id="edit-badge-craig" style="display:none">Editing</span>
+      </div>
+      <div id="multi-craig" style="display:block">
+        <div class="cal-week-nav">
+          <button class="cal-nav-btn" onclick="prevWeek('craig')">‹</button>
+          <span class="cal-week-label" id="week-label-craig">This week</span>
+          <button class="cal-nav-btn" onclick="nextWeek('craig')">›</button>
+        </div>
+        <div class="date-grid" id="cal-craig"></div>
+        <div class="sel-count" id="sel-count-craig">Select days you worked</div>
+      </div>
+      <div class="f2">
+        <div class="field">
+          <label>Shift type</label>
+          <select id="type-craig">
+            <option value="Regular">Regular</option>
+            <option value="Eve prem">Evening prem</option>
+            <option value="Wknd prem">Weekend prem</option>
+            <option value="OT 1.5x">Overtime 1.5x</option>
+            <option value="Holiday">Holiday 1.5x</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Hours per shift</label>
+          <input type="number" id="hrs-craig" placeholder="7.5" step="0.25" inputmode="decimal">
+        </div>
+      </div>
+      <div class="f2" style="margin-bottom:12px">
+        <div class="field">
+          <label>Extra pay ($)</label>
+          <input type="number" id="extra-craig" placeholder="0.00" step="0.01" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Or exact date</label>
+          <input type="date" id="single-date-craig">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost" id="cancel-craig" onclick="cancelEdit('craig')" style="display:none">Cancel</button>
+        <button class="btn craig" id="submit-craig" onclick="submitShift('craig')">+ Add selected shifts</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="pg" id="pg-history">
+  <div class="filter-row">
+    <button class="filter-btn on" onclick="setFilter('all',this)">All periods</button>
+    <button class="filter-btn" onclick="setFilter('lhsc',this)">LHSC</button>
+    <button class="filter-btn" onclick="setFilter('craig',this)">Craigweil</button>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+<!-- STATS -->
+<div class="pg" id="pg-stats">
+  <div class="stat-grid" id="stat-grid"></div>
+  <div class="chart-card" id="pay-chart"></div>
+  <div class="chart-card" id="hrs-chart"></div>
+</div>
+
+<!-- SETUP -->
+<div class="pg" id="pg-setup">
+  <div class="setup-card">
+    <div class="setup-title lhsc">● LHSC</div>
+    <div class="setup-row"><div><div class="setup-row-label">Hourly rate</div></div><input class="setup-input" type="number" id="s-lhsc-rate" step="0.01"></div>
+    <div class="setup-row"><div><div class="setup-row-label">First period start</div><div class="setup-row-sub">Anchor — periods auto-roll from here</div></div><input class="setup-input" type="date" id="s-lhsc-anchor"></div>
+    <div class="setup-row"><div><div class="setup-row-label">Pay day offset (days)</div><div class="setup-row-sub">Days after period end → pay day</div></div><input class="setup-input" type="number" id="s-lhsc-offset"></div>
+  </div>
+  <div class="setup-card">
+    <div class="setup-title craig">● Craigweil</div>
+    <div class="setup-row"><div><div class="setup-row-label">Hourly rate</div></div><input class="setup-input" type="number" id="s-craig-rate" step="0.01"></div>
+    <div class="setup-row"><div><div class="setup-row-label">First period start</div><div class="setup-row-sub">Anchor — periods auto-roll from here</div></div><input class="setup-input" type="date" id="s-craig-anchor"></div>
+    <div class="setup-row"><div><div class="setup-row-label">Pay day offset (days)</div><div class="setup-row-sub">Days after period end → pay day</div></div><input class="setup-input" type="number" id="s-craig-offset"></div>
+  </div>
+  <div class="setup-card">
+    <div class="setup-title g">Deductions per period</div>
+    <div class="setup-row"><div><div class="setup-row-label">Pension (before-tax)</div></div><input class="setup-input" type="number" id="s-pension" step="0.01"></div>
+    <div class="setup-row"><div><div class="setup-row-label">Union dues</div></div><input class="setup-input" type="number" id="s-union" step="0.01"></div>
+    <div class="setup-row"><div><div class="setup-row-label">After-tax deductions</div></div><input class="setup-input" type="number" id="s-aftertax" step="0.01"></div>
+  </div>
+  <button class="save-btn" onclick="saveSettings()">Save settings</button>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="overlay" id="edit-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      Edit shift
+      <span class="badge" id="modal-badge">—</span>
+      <span class="badge editing">Editing</span>
+    </div>
+    <div class="f2">
+      <div class="field"><label>Date</label><input type="date" id="m-date"></div>
+      <div class="field"><label>Type</label>
+        <select id="m-type">
+          <option value="Regular">Regular</option>
+          <option value="Eve prem">Evening prem</option>
+          <option value="Wknd prem">Weekend prem</option>
+          <option value="OT 1.5x">Overtime 1.5x</option>
+          <option value="Holiday">Holiday 1.5x</option>
+        </select>
+      </div>
+      <div class="field"><label>Hours</label><input type="number" id="m-hrs" step="0.25" inputmode="decimal"></div>
+      <div class="field"><label>Extra ($)</label><input type="number" id="m-extra" step="0.01" inputmode="decimal"></div>
+    </div>
+    <div class="btn-row" style="margin-top:4px">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn amber" onclick="saveModal()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="nb on" id="nb-home" onclick="showPage('home')"><span class="ic">🏠</span>Home</button>
+  <button class="nb" id="nb-log" onclick="showPage('log')"><span class="ic">⏱</span>Log</button>
+  <button class="nb" id="nb-history" onclick="showPage('history')"><span class="ic">📋</span>History</button>
+  <button class="nb" id="nb-stats" onclick="showPage('stats')"><span class="ic">📊</span>Stats</button>
+  <button class="nb" id="nb-setup" onclick="showPage('setup')"><span class="ic">⚙️</span>Setup</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const SK = 'pt_set7', SHK = 'pt_sh7';
+const PD = 14;
+
+let S = JSON.parse(localStorage.getItem(SK)||'null') || {
+  lhsc:  {rate:27.01, anchor:'2025-08-21', offset:6},
+  craig: {rate:26.00, anchor:'2025-08-17', offset:5},
+  pension:147.63, union:15.73, aftertax:170.81
+};
+let SH = JSON.parse(localStorage.getItem(SHK)||'{}');
+let selectedDates = {lhsc:new Set(), craig:new Set()};
+let weekOffset    = {lhsc:0, craig:0};
+let modal         = {job:null, ps:null, idx:null};
+let histFilter    = 'all';
+let curJob        = 'lhsc';
+let editingIdx    = {lhsc:null, craig:null};
+
+function save(){ localStorage.setItem(SK,JSON.stringify(S)); localStorage.setItem(SHK,JSON.stringify(SH)); }
+
+// ── UTC DATE UTILS (no timezone bugs) ────────────────────────────────────────
+function toUTC(s){ const[y,m,d]=s.split('-').map(Number); return Date.UTC(y,m-1,d); }
+function msStr(ms){ const d=new Date(ms); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
+function todayStr(){ return msStr(Date.now()); }
+
+function period(job,date){
+  const a=toUTC(S[job].anchor), t=toUTC(date);
+  const diff=Math.floor((t-a)/86400000);
+  const pn=diff<0?0:Math.floor(diff/PD);
+  const s=a+pn*PD*86400000, e=s+(PD-1)*86400000, p=e+S[job].offset*86400000;
+  return{num:pn+1, start:msStr(s), end:msStr(e), payday:msStr(p)};
+}
+function curPeriod(job){ return period(job,todayStr()); }
+function shifts(job,ps){ return SH[job+'_'+ps]||[]; }
+function setShifts(job,ps,arr){ SH[job+'_'+ps]=arr; save(); }
+
+// ── FORMATTING ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt  = n=>'$'+Math.abs(n).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtS = n=>'$'+Math.round(Math.abs(n)).toLocaleString('en-CA');
+const fmtD = s=>new Date(s+'T12:00:00').toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function daysUntil(s){
+  const t=new Date(); t.setHours(0,0,0,0);
+  return Math.round((new Date(s+'T00:00:00')-t)/86400000);
+}
+function cdText(s){
+  const d=daysUntil(s);
+  if(d<0)  return{t:'✓ Paid',c:'dim'};
+  if(d===0) return{t:'🎉 PAY DAY TODAY!',c:'soon'};
+  if(d===1) return{t:'💰 Pay day tomorrow',c:'soon'};
+  if(d<=5)  return{t:d+' days to pay day',c:'warn'};
+  return{t:d+' days to pay day',c:'dim'};
+}
+function pct(job){
+  const p=curPeriod(job), s=toUTC(p.start), e=toUTC(p.end), n=Date.now();
+  return Math.round(Math.min(1,Math.max(0,(n-s)/(e-s+86400000)))*100);
+}
+
+function calcPay(job,hrs,type,extra){
+  const ot=type==='OT 1.5x'||type==='Holiday';
+  return hrs*S[job].rate*(ot?1.5:1)+(extra||0);
+}
+function summarize(arr){
+  let hrs=0,reg=0,ot=0;
+  arr.forEach(s=>{hrs+=s.hrs; (s.type==='OT 1.5x'||s.type==='Holiday'?ot:reg)+=s.pay;});
+  return{hrs,reg,ot,gross:reg+ot};
+}
+function calcTax(gross){
+  const p=26,ann=gross*p,bt=(S.pension+S.union)*p,t=Math.max(0,ann-bt);
+  const f=Math.max(0,Math.min(t,55867)*.15+Math.max(0,Math.min(t,111733)-55867)*.205+Math.max(0,Math.min(t,154906)-111733)*.26+Math.max(0,Math.min(t,220000)-154906)*.29+Math.max(0,t-220000)*.33-15705*.15);
+  const pv=Math.max(0,Math.min(t,51446)*.0505+Math.max(0,Math.min(t,102894)-51446)*.0915+Math.max(0,Math.min(t,150000)-102894)*.1116+Math.max(0,Math.min(t,220000)-150000)*.1216+Math.max(0,t-220000)*.1316-11865*.0505);
+  const cpp=Math.min(Math.max(ann-3500,0),65000)*.0595, ei=Math.min(ann,63200)*.0166;
+  return(f+pv+cpp+ei)/p;
+}
+
+// ── CALENDAR ─────────────────────────────────────────────────────────────────
+function renderCal(job){
+  const today=todayStr();
+  const now=new Date(); now.setUTCHours(12,0,0,0);
+  const mondayOffset=((now.getUTCDay()+6)%7); // days since monday
+  const weekStart=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()-mondayOffset+weekOffset[job]*7));
+  
+  const label=weekOffset[job]===0?'This week':weekOffset[job]===-1?'Last week':`Week of ${fmtD(msStr(weekStart.getTime()))}`;
+  $('week-label-'+job).textContent=label;
+
+  const grid=$('cal-'+job);
+  grid.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(weekStart); d.setUTCDate(d.getUTCDate()+i);
+    const ds=msStr(d.getTime());
+    const isToday=ds===today;
+    const isSel=selectedDates[job].has(ds);
+    const btn=document.createElement('button');
+    btn.className='cal-day'+(isToday?' today':'')+(isSel?' sel '+job:'');
+    btn.innerHTML=`<span class="cal-day-num">${d.getUTCDate()}</span><span class="cal-day-name">${DAYS[d.getUTCDay()]}</span>`;
+    btn.onclick=()=>{
+      if(editingIdx[job]!==null) return;
+      if(selectedDates[job].has(ds)) selectedDates[job].delete(ds);
+      else selectedDates[job].add(ds);
+      renderCal(job);
+      updateSelCount(job);
+    };
+    grid.appendChild(btn);
+  }
+  updateSelCount(job);
+}
+
+function updateSelCount(job){
+  const n=selectedDates[job].size;
+  $('sel-count-'+job).innerHTML=n===0?'<span style="color:var(--sub)">Tap days above to select shifts</span>':`<span>${n} day${n>1?'s':''} selected</span> — fill in hours below`;
+  $('submit-'+job).textContent=editingIdx[job]!==null?'Save changes':n>0?`+ Add ${n} shift${n>1?'s':''}`:'+ Add shift';
+}
+
+window.prevWeek=job=>{ weekOffset[job]--; renderCal(job); };
+window.nextWeek=job=>{ weekOffset[job]++; renderCal(job); };
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderAll(){ renderHome(); renderLog(); renderHistory(); renderStats(); }
+
+function renderHome(){
+  ['lhsc','craig'].forEach(job=>{
+    const p=curPeriod(job), {hrs,gross}=summarize(shifts(job,p.start));
+    const cd=cdText(p.payday), name=job==='lhsc'?'LHSC':'Craigweil';
+    $(`${job}-card`).innerHTML=`
+      <div class="job-card ${job}"><div class="jc-glow ${job}"></div>
+        <div class="jc-row">
+          <div>
+            <div class="jc-name ${job}">${name}</div>
+            <div class="jc-period">Period ${p.num} · ${fmtD(p.start)} – ${fmtD(p.end)}</div>
+            <div class="jc-rate">$${S[job].rate.toFixed(2)}/hr</div>
+          </div>
+          <div>
+            <div class="jc-gross ${job}">${fmt(gross)}</div>
+            <div class="jc-hrs">${hrs.toFixed(2)} hrs logged</div>
+          </div>
+        </div>
+        <div class="prog"><div class="prog-fill ${job}" style="width:${pct(job)}%"></div></div>
+        <div class="jc-foot">
+          <div class="jc-cd ${cd.c}">${cd.t}</div>
+          <div class="jc-period">Pay day ${fmtD(p.payday)}</div>
+        </div>
+      </div>`;
+  });
+
+  const lp=curPeriod('lhsc'), cp=curPeriod('craig');
+  const ls=summarize(shifts('lhsc',lp.start)), cs=summarize(shifts('craig',cp.start));
+  const combined=ls.gross+cs.gross, tax=calcTax(combined), ded=S.pension+S.union+S.aftertax;
+  $('combo-card').innerHTML=`
+    <div class="combo-title">Combined this period</div>
+    <div class="combo-big"><span class="combo-big-label">Total gross</span><span class="combo-big-val">${fmt(combined)}</span></div>
+    <div class="combo-row"><span class="combo-row-label">Est. tax (Ontario)</span><span class="combo-row-val" style="color:var(--red)">−${fmt(tax)}</span></div>
+    <div class="combo-row"><span class="combo-row-label">Deductions</span><span class="combo-row-val" style="color:var(--red)">−${fmt(ded)}</span></div>
+    <div class="combo-row"><span class="combo-row-label">Est. net take-home</span><span class="combo-row-val" style="color:var(--green);font-size:16px">${fmt(combined-tax-ded)}</span></div>
+    <div class="combo-row"><span class="combo-row-label">LHSC hours</span><span class="combo-row-val" style="color:var(--lhsc)">${ls.hrs.toFixed(2)} hrs</span></div>
+    <div class="combo-row"><span class="combo-row-label">Craigweil hours</span><span class="combo-row-val" style="color:var(--craig)">${cs.hrs.toFixed(2)} hrs</span></div>
+    <div class="combo-row"><span class="combo-row-label">Total hours</span><span class="combo-row-val">${(ls.hrs+cs.hrs).toFixed(2)} hrs</span></div>`;
+
+  $('top-amt').textContent=fmt(combined);
+  $('top-date').textContent=new Date().toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
+
+  if(!sessionStorage.getItem('n')){
+    sessionStorage.setItem('n','1');
+    const lD=daysUntil(lp.payday),cD=daysUntil(cp.payday);
+    if(lD===0) toast('🎉 LHSC pay day TODAY! '+fmt(ls.gross));
+    else if(cD===0) toast('🎉 Craigweil pay day TODAY! '+fmt(cs.gross));
+    else if(lD===1) toast('💰 LHSC pay day TOMORROW!');
+    else if(cD===1) toast('💰 Craigweil pay day TOMORROW!');
+    else if(lD<=4||cD<=4) toast('📅 Pay day coming — '+fmt(combined)+' earned');
+  }
+}
+
+function renderLog(){
+  ['lhsc','craig'].forEach(job=>{
+    const p=curPeriod(job), arr=shifts(job,p.start);
+    $('rows-'+job).innerHTML=arr.length?arr.map((s,i)=>`
+      <div class="shift">
+        <span class="sh-date">${fmtD(s.date)}</span>
+        <span class="sh-type">${s.type}</span>
+        <span class="sh-hrs">${s.hrs.toFixed(2)}</span>
+        <span class="sh-pay">${fmt(s.pay)}</span>
+        <span class="sh-btns">
+          <button class="act-btn edit" onclick="openModal('${job}','${p.start}',${i})">✏️</button>
+          <button class="act-btn del" onclick="delShift('${job}','${p.start}',${i})">✕</button>
+        </span>
+      </div>`).join(''):'<div class="sh-empty">No shifts yet — select days above 👆</div>';
+    const{hrs,reg,ot,gross}=summarize(arr);
+    $('ft-'+job+'-hrs').textContent=hrs.toFixed(2);
+    $('ft-'+job+'-reg').textContent=fmtS(reg);
+    $('ft-'+job+'-ot').textContent=fmtS(ot);
+    $('ft-'+job+'-gross').textContent=fmtS(gross);
+  });
+}
+
+function renderHistory(){
+  const el=$('history-list');
+  const jobs=histFilter==='all'?['lhsc','craig']:[histFilter];
+  const cur={lhsc:curPeriod('lhsc').start,craig:curPeriod('craig').start};
+  let periods=[];
+  jobs.forEach(job=>{
+    Object.keys(SH).filter(k=>k.startsWith(job+'_')).forEach(k=>{
+      periods.push({job,start:k.replace(job+'_','')});
+    });
+    if(!periods.find(p=>p.job===job&&p.start===cur[job]))
+      periods.push({job,start:cur[job]});
+  });
+  periods=[...new Map(periods.map(p=>[p.job+'_'+p.start,p])).values()];
+  periods.sort((a,b)=>b.start.localeCompare(a.start)||(a.job>b.job?1:-1));
+
+  el.innerHTML=periods.map((p,i)=>{
+    const per=period(p.job,p.start), arr=shifts(p.job,p.start);
+    const{hrs,ot,gross}=summarize(arr);
+    const isCur=p.start===cur[p.job];
+    const name=p.job==='lhsc'?'LHSC':'Craigweil';
+    const col=p.job==='lhsc'?'var(--lhsc)':'var(--craig)';
+    return`<div class="period-card">
+      <div class="period-hdr" onclick="togglePeriod('pb${i}','pc${i}')">
+        <div>
+          <div class="ph-name" style="color:${col}">${name} · P${per.num} ${isCur?'<span class="curr-tag">Current</span>':''}</div>
+          <div class="ph-dates">${fmtD(per.start)} – ${fmtD(per.end)}</div>
+          <div class="ph-payday">Pay day: ${fmtD(per.payday)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="text-align:right">
+            <div class="ph-gross ${p.job}">${fmt(gross)}</div>
+            <div class="ph-hrs">${hrs.toFixed(2)} hrs · ${arr.length} shifts</div>
+          </div>
+          <span class="ph-chev" id="pc${i}">›</span>
+        </div>
+      </div>
+      <div class="period-body" id="pb${i}">
+        <div class="mini-stats">
+          <div class="ms-item"><div class="ms-label">Gross</div><div class="ms-val" style="color:${col}">${fmt(gross)}</div></div>
+          <div class="ms-item"><div class="ms-label">Hours</div><div class="ms-val">${hrs.toFixed(2)}</div></div>
+          <div class="ms-item"><div class="ms-label">OT/Prem</div><div class="ms-val">${fmt(ot)}</div></div>
+        </div>
+        ${arr.length?`
+          <div class="sh-hdr" style="border-radius:8px 8px 0 0">
+            <span>Date</span><span>Type</span><span>Hrs</span><span>Pay</span><span>Edit</span>
+          </div>
+          ${arr.map((s,si)=>`
+          <div class="hist-row">
+            <span style="color:var(--sub)">${fmtD(s.date)}</span>
+            <span style="color:var(--sub);font-size:11px">${s.type}</span>
+            <span style="text-align:right">${s.hrs.toFixed(2)}</span>
+            <span style="text-align:right;font-weight:700">${fmt(s.pay)}</span>
+            <div class="sh-btns">
+              <button class="act-btn edit" onclick="openModal('${p.job}','${per.start}',${si})">✏️</button>
+              <button class="act-btn del" onclick="delShift('${p.job}','${per.start}',${si})">✕</button>
+            </div>
+          </div>`).join('')}`:'<div style="color:var(--sub);font-size:12px;padding:8px 0">No shifts logged</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStats(){
+  let all=[];
+  ['lhsc','craig'].forEach(job=>{
+    Object.keys(SH).filter(k=>k.startsWith(job+'_')).forEach(k=>{
+      const start=k.replace(job+'_',''), s=summarize(SH[k]), p=period(job,start);
+      all.push({job,start,...s,num:p.num});
+    });
+    const c=curPeriod(job);
+    if(!all.find(p=>p.job===job&&p.start===c.start))
+      all.push({job,start:c.start,...summarize(shifts(job,c.start)),num:c.num});
+  });
+  const tG=all.reduce((s,p)=>s+p.gross,0),tH=all.reduce((s,p)=>s+p.hrs,0);
+  const lG=all.filter(p=>p.job==='lhsc').reduce((s,p)=>s+p.gross,0);
+  const cG=all.filter(p=>p.job==='craig').reduce((s,p)=>s+p.gross,0);
+  const lH=all.filter(p=>p.job==='lhsc').reduce((s,p)=>s+p.hrs,0);
+  const cH=all.filter(p=>p.job==='craig').reduce((s,p)=>s+p.hrs,0);
+  $('stat-grid').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total earned</div><div class="stat-val" style="color:var(--green)">${fmt(tG)}</div><div class="stat-sub">All periods</div></div>
+    <div class="stat-card"><div class="stat-label">Total hours</div><div class="stat-val">${tH.toFixed(1)}</div><div class="stat-sub">Both jobs</div></div>
+    <div class="stat-card"><div class="stat-label">LHSC total</div><div class="stat-val" style="color:var(--lhsc)">${fmt(lG)}</div><div class="stat-sub">${lH.toFixed(1)} hrs</div></div>
+    <div class="stat-card"><div class="stat-label">Craigweil total</div><div class="stat-val" style="color:var(--craig)">${fmt(cG)}</div><div class="stat-sub">${cH.toFixed(1)} hrs</div></div>`;
+
+  const recent=all.sort((a,b)=>b.start.localeCompare(a.start)).slice(0,8).reverse();
+  const mG=Math.max(...recent.map(p=>p.gross),1),mH=Math.max(...recent.map(p=>p.hrs),1);
+  $('pay-chart').innerHTML=`<div class="chart-title">Gross pay by period</div>`+recent.map(p=>`
+    <div class="chart-row">
+      <span class="chart-lbl" style="color:${p.job==='lhsc'?'var(--lhsc)':'var(--craig)'}">${p.job==='lhsc'?'LHSC':'Craig'} ${p.num}</span>
+      <div class="chart-track"><div class="chart-bar" style="width:${(p.gross/mG*100).toFixed(0)}%;background:${p.job==='lhsc'?'var(--lhsc)':'var(--craig)'}"></div></div>
+      <span class="chart-val">${fmtS(p.gross)}</span>
+    </div>`).join('');
+  $('hrs-chart').innerHTML=`<div class="chart-title">Hours by period</div>`+recent.map(p=>`
+    <div class="chart-row">
+      <span class="chart-lbl" style="color:${p.job==='lhsc'?'var(--lhsc)':'var(--craig)'}">${p.job==='lhsc'?'LHSC':'Craig'} ${p.num}</span>
+      <div class="chart-track"><div class="chart-bar" style="width:${(p.hrs/mH*100).toFixed(0)}%;background:${p.job==='lhsc'?'var(--lhsc)':'var(--craig)'}"></div></div>
+      <span class="chart-val">${p.hrs.toFixed(1)}h</span>
+    </div>`).join('');
+}
+
+function renderSetup(){
+  $('s-lhsc-rate').value  =S.lhsc.rate;
+  $('s-lhsc-anchor').value=S.lhsc.anchor;
+  $('s-lhsc-offset').value=S.lhsc.offset;
+  $('s-craig-rate').value  =S.craig.rate;
+  $('s-craig-anchor').value=S.craig.anchor;
+  $('s-craig-offset').value=S.craig.offset;
+  $('s-pension').value    =S.pension;
+  $('s-union').value      =S.union;
+  $('s-aftertax').value   =S.aftertax;
+}
+
+// ── SHIFT ACTIONS ─────────────────────────────────────────────────────────────
+window.submitShift=job=>{
+  const hrs  =parseFloat($('hrs-'+job).value);
+  const type = $('type-'+job).value;
+  const extra=parseFloat($('extra-'+job).value)||0;
+  const single=$('single-date-'+job).value;
+
+  if(!hrs||hrs<=0){ toast('Enter hours per shift'); return; }
+
+  // Editing single shift mode
+  if(editingIdx[job]!==null){
+    if(!single){ toast('Pick a date'); return; }
+    const p=period(job,single);
+    const arr=shifts(job,p.start);
+    arr[editingIdx[job]]={date:single,type,hrs,pay:calcPay(job,hrs,type,extra),extra};
+    arr.sort((a,b)=>a.date.localeCompare(b.date));
+    setShifts(job,p.start,arr);
+    cancelEdit(job);
+    renderAll(); toast('✓ Shift updated'); return;
+  }
+
+  // Multi date mode
+  const dates=[...selectedDates[job]];
+  if(single) dates.push(single);
+  const unique=[...new Set(dates)].sort();
+  if(!unique.length){ toast('Select at least one day'); return; }
+
+  unique.forEach(date=>{
+    const p=period(job,date);
+    const arr=shifts(job,p.start);
+    if(!arr.find(s=>s.date===date)){
+      arr.push({date,type,hrs,pay:calcPay(job,hrs,type,extra),extra});
+      arr.sort((a,b)=>a.date.localeCompare(b.date));
+      setShifts(job,p.start,arr);
+    }
+  });
+
+  selectedDates[job].clear();
+  $('hrs-'+job).value='';
+  $('extra-'+job).value='';
+  $('single-date-'+job).value='';
+  renderCal(job);
+  renderAll();
+  toast(`✓ ${unique.length} shift${unique.length>1?'s':''} added`);
+};
+
+window.delShift=(job,ps,idx)=>{
+  if(!confirm('Remove this shift?')) return;
+  const arr=shifts(job,ps); arr.splice(idx,1);
+  setShifts(job,ps,arr); renderAll(); toast('Shift removed');
+};
+
+window.cancelEdit=job=>{
+  editingIdx[job]=null;
+  $('add-title-'+job).textContent='Add shifts';
+  $('edit-badge-'+job).style.display='none';
+  $('submit-'+job).textContent='+ Add selected shifts';
+  $('submit-'+job).className='btn '+job;
+  $('cancel-'+job).style.display='none';
+  $('multi-'+job).style.display='block';
+  $('single-date-'+job).value='';
+  $('hrs-'+job).value='';
+  $('extra-'+job).value='';
+};
+
+// ── EDIT MODAL ────────────────────────────────────────────────────────────────
+window.openModal=(job,ps,idx)=>{
+  const s=shifts(job,ps)[idx];
+  modal={job,ps,idx};
+  $('m-date').value=s.date; $('m-type').value=s.type;
+  $('m-hrs').value=s.hrs; $('m-extra').value=s.extra||0;
+  const b=$('modal-badge'); b.className='badge '+job;
+  b.textContent=job==='lhsc'?'LHSC':'Craigweil';
+  $('edit-overlay').classList.add('on');
+};
+window.closeModal=()=>{ $('edit-overlay').classList.remove('on'); modal={job:null,ps:null,idx:null}; };
+window.saveModal=()=>{
+  const{job,ps,idx}=modal; if(!job) return;
+  const date=$('m-date').value,type=$('m-type').value;
+  const hrs=parseFloat($('m-hrs').value),extra=parseFloat($('m-extra').value)||0;
+  if(!date||!hrs||hrs<=0){toast('Fill in all fields');return;}
+  const arr=shifts(job,ps);
+  arr[idx]={date,type,hrs,pay:calcPay(job,hrs,type,extra),extra};
+  arr.sort((a,b)=>a.date.localeCompare(b.date));
+  setShifts(job,ps,arr);
+  closeModal(); renderAll(); toast('✓ Shift updated');
+};
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+window.switchJob=job=>{
+  curJob=job;
+  $('log-lhsc').style.display=job==='lhsc'?'block':'none';
+  $('log-craig').style.display=job==='craig'?'block':'none';
+  $('seg-lhsc').className='seg-btn lhsc'+(job==='lhsc'?' on':'');
+  $('seg-craig').className='seg-btn craig'+(job==='craig'?' on':'');
+};
+
+window.setFilter=(f,btn)=>{
+  histFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); renderHistory();
+};
+
+window.togglePeriod=(id,chev)=>{
+  $(id).classList.toggle('open');
+  $(chev).classList.toggle('open');
+};
+
+window.showPage=name=>{
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  $('pg-'+name).classList.add('on');
+  $('nb-'+name).classList.add('on');
+  if(name==='log'){ renderCal('lhsc'); renderCal('craig'); }
+  renderAll();
+};
+
+window.saveSettings=()=>{
+  S.lhsc.rate  =parseFloat($('s-lhsc-rate').value)||27.01;
+  S.lhsc.anchor=$('s-lhsc-anchor').value;
+  S.lhsc.offset=parseInt($('s-lhsc-offset').value)||6;
+  S.craig.rate  =parseFloat($('s-craig-rate').value)||26.00;
+  S.craig.anchor=$('s-craig-anchor').value;
+  S.craig.offset=parseInt($('s-craig-offset').value)||5;
+  S.pension=parseFloat($('s-pension').value)||0;
+  S.union  =parseFloat($('s-union').value)||0;
+  S.aftertax=parseFloat($('s-aftertax').value)||0;
+  save(); renderAll(); toast('✓ Settings saved');
+};
+
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),3000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderSetup();
+renderCal('lhsc');
+renderCal('craig');
+renderAll();
+</script>
+</body>
+</html>
